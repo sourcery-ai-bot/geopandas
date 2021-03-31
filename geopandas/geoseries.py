@@ -56,11 +56,7 @@ def inherit_doc(cls):
 
     def decorator(decorated):
         original_method = getattr(cls, decorated.__name__, None)
-        if original_method:
-            doc = original_method.__doc__ or ""
-        else:
-            doc = ""
-
+        doc = original_method.__doc__ or "" if original_method else ""
         decorated.__doc__ = doc
         return decorated
 
@@ -156,7 +152,7 @@ class GeoSeries(GeoPandasBase, Series):
                 # make a copy to avoid setting CRS to passed GeometryArray
                 data = data.copy()
             else:
-                if not data.crs == crs:
+                if data.crs != crs:
                     warnings.warn(
                         "CRS mismatch between CRS of the passed geometries "
                         "and 'crs'. Use 'GeoDataFrame.set_crs(crs, "
@@ -572,9 +568,8 @@ class GeoSeries(GeoPandasBase, Series):
     @inherit_doc(pd.Series)
     def apply(self, func, convert_dtype=True, args=(), **kwargs):
         result = super().apply(func, convert_dtype=convert_dtype, args=args, **kwargs)
-        if isinstance(result, GeoSeries):
-            if self.crs is not None:
-                result.set_crs(self.crs, inplace=True)
+        if isinstance(result, GeoSeries) and self.crs is not None:
+            result.set_crs(self.crs, inplace=True)
         return result
 
     def __finalize__(self, other, method=None, **kwargs):
@@ -934,17 +929,14 @@ class GeoSeries(GeoPandasBase, Series):
         else:
             raise ValueError("Must pass either crs or epsg.")
 
-        if not allow_override and self.crs is not None and not self.crs == crs:
+        if not allow_override and self.crs is not None and self.crs != crs:
             raise ValueError(
                 "The GeoSeries already has a CRS which is not equal to the passed "
                 "CRS. Specify 'allow_override=True' to allow replacing the existing "
                 "CRS without doing any transformation. If you actually want to "
                 "transform the geometries, use 'GeoSeries.to_crs' instead."
             )
-        if not inplace:
-            result = self.copy()
-        else:
-            result = self
+        result = self.copy() if not inplace else self
         result.crs = crs
         return result
 

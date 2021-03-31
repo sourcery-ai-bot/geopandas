@@ -46,10 +46,9 @@ def epsg_from_crs(crs):
     )
     crs = CRS.from_user_input(crs)
     if "init=epsg" in crs.to_string().lower():
-        epsg_code = crs.to_epsg(0)
+        return crs.to_epsg(0)
     else:
-        epsg_code = crs.to_epsg()
-    return epsg_code
+        return crs.to_epsg()
 
 
 def get_epsg_file_contents():

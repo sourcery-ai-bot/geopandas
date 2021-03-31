@@ -71,10 +71,8 @@ def write_legacy_pickles(output_dir):
 
     pth = "{}.pickle".format(platform_name())
 
-    fh = open(os.path.join(output_dir, pth), "wb")
-    pickle.dump(create_pickle_data(), fh, pickle.DEFAULT_PROTOCOL)
-    fh.close()
-
+    with open(os.path.join(output_dir, pth), "wb") as fh:
+        pickle.dump(create_pickle_data(), fh, pickle.DEFAULT_PROTOCOL)
     print("created pickle file: {}".format(pth))
 
 
@@ -85,10 +83,10 @@ def main():
             "storage_files.py <output_dir> <storage_type> "
         )
 
-    output_dir = str(sys.argv[1])
     storage_type = str(sys.argv[2])
 
     if storage_type == "pickle":
+        output_dir = str(sys.argv[1])
         write_legacy_pickles(output_dir=output_dir)
     else:
         exit("storage_type must be one of {'pickle'}")

@@ -13,7 +13,7 @@ def _ensure_geometry_column(df):
     Helper function to ensure the geometry column is called 'geometry'.
     If another column with that name exists, it will be dropped.
     """
-    if not df._geometry_column_name == "geometry":
+    if df._geometry_column_name != "geometry":
         if "geometry" in df.columns:
             df.drop("geometry", axis=1, inplace=True)
         df.rename(
@@ -29,41 +29,41 @@ def _overlay_intersection(df1, df2):
     # Spatial Index to create intersections
     idx1, idx2 = df2.sindex.query_bulk(df1.geometry, predicate="intersects", sort=True)
     # Create pairs of geometries in both dataframes to be intersected
-    if idx1.size > 0 and idx2.size > 0:
-        left = df1.geometry.take(idx1)
-        left.reset_index(drop=True, inplace=True)
-        right = df2.geometry.take(idx2)
-        right.reset_index(drop=True, inplace=True)
-        intersections = left.intersection(right)
-        poly_ix = intersections.type.isin(["Polygon", "MultiPolygon"])
-        intersections.loc[poly_ix] = intersections[poly_ix].buffer(0)
-
-        # only keep actual intersecting geometries
-        pairs_intersect = pd.DataFrame({"__idx1": idx1, "__idx2": idx2})
-        geom_intersect = intersections
-
-        # merge data for intersecting geometries
-        df1 = df1.reset_index(drop=True)
-        df2 = df2.reset_index(drop=True)
-        dfinter = pairs_intersect.merge(
-            df1.drop(df1._geometry_column_name, axis=1),
-            left_on="__idx1",
-            right_index=True,
-        )
-        dfinter = dfinter.merge(
-            df2.drop(df2._geometry_column_name, axis=1),
-            left_on="__idx2",
-            right_index=True,
-            suffixes=("_1", "_2"),
-        )
-
-        return GeoDataFrame(dfinter, geometry=geom_intersect, crs=df1.crs)
-    else:
+    if idx1.size <= 0 or idx2.size <= 0:
         return GeoDataFrame(
             [],
             columns=list(set(df1.columns).union(df2.columns)) + ["__idx1", "__idx2"],
             crs=df1.crs,
         )
+
+    left = df1.geometry.take(idx1)
+    left.reset_index(drop=True, inplace=True)
+    right = df2.geometry.take(idx2)
+    right.reset_index(drop=True, inplace=True)
+    intersections = left.intersection(right)
+    poly_ix = intersections.type.isin(["Polygon", "MultiPolygon"])
+    intersections.loc[poly_ix] = intersections[poly_ix].buffer(0)
+
+    # only keep actual intersecting geometries
+    pairs_intersect = pd.DataFrame({"__idx1": idx1, "__idx2": idx2})
+    geom_intersect = intersections
+
+    # merge data for intersecting geometries
+    df1 = df1.reset_index(drop=True)
+    df2 = df2.reset_index(drop=True)
+    dfinter = pairs_intersect.merge(
+        df1.drop(df1._geometry_column_name, axis=1),
+        left_on="__idx1",
+        right_index=True,
+    )
+    dfinter = dfinter.merge(
+        df2.drop(df2._geometry_column_name, axis=1),
+        left_on="__idx2",
+        right_index=True,
+        suffixes=("_1", "_2"),
+    )
+
+    return GeoDataFrame(dfinter, geometry=geom_intersect, crs=df1.crs)
 
 
 def _overlay_difference(df1, df2):
@@ -133,7 +133,7 @@ def _overlay_union(df1, df2):
     # keep geometry column last
     columns = list(dfunion.columns)
     columns.remove("geometry")
-    columns = columns + ["geometry"]
+    columns += ["geometry"]
     return dfunion.reindex(columns=columns)
 
 

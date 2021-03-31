@@ -27,8 +27,7 @@ _CRS = "epsg:4326"
 @pytest.fixture
 def df_nybb():
     nybb_path = geopandas.datasets.get_path("nybb")
-    df = read_file(nybb_path)
-    return df
+    return read_file(nybb_path)
 
 
 @pytest.fixture
@@ -47,14 +46,13 @@ def file_path():
 def df_points():
     N = 10
     crs = _CRS
-    df = GeoDataFrame(
+    return GeoDataFrame(
         [
             {"geometry": Point(x, y), "value1": x + y, "value2": x * y}
             for x, y in zip(range(N), range(N))
         ],
         crs=crs,
     )
-    return df
 
 
 # -----------------------------------------------------------------------------
@@ -172,10 +170,11 @@ def test_to_file_types(tmpdir, df_points):
         np.uint64,
     ]
     geometry = df_points.geometry
-    data = dict(
-        (str(i), np.arange(len(geometry), dtype=dtype))
+    data = {
+        str(i): np.arange(len(geometry), dtype=dtype)
         for i, dtype in enumerate(int_types)
-    )
+    }
+
     df = GeoDataFrame(data, geometry=geometry)
     df.to_file(tempfilename)
 

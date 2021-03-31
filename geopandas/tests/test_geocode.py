@@ -52,14 +52,12 @@ class ReverseMock(mock.MagicMock):
 
 @pytest.fixture
 def locations():
-    locations = ["260 Broadway, New York, NY", "77 Massachusetts Ave, Cambridge, MA"]
-    return locations
+    return ["260 Broadway, New York, NY", "77 Massachusetts Ave, Cambridge, MA"]
 
 
 @pytest.fixture
 def points():
-    points = [Point(-71.0597732, 42.3584308), Point(-77.0365305, 38.8977332)]
-    return points
+    return [Point(-71.0597732, 42.3584308), Point(-77.0365305, 38.8977332)]
 
 
 def test_prepare_result():

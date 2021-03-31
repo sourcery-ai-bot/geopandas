@@ -19,8 +19,7 @@ import pytest
 @pytest.fixture
 def df_nybb():
     nybb_path = geopandas.datasets.get_path("nybb")
-    df = read_file(nybb_path)
-    return df
+    return read_file(nybb_path)
 
 
 @pytest.fixture()
@@ -126,7 +125,7 @@ def drop_table_if_exists(conn_or_engine, table):
 def df_mixed_single_and_multi():
     from shapely.geometry import Point, LineString, MultiLineString
 
-    df = geopandas.GeoDataFrame(
+    return geopandas.GeoDataFrame(
         {
             "geometry": [
                 LineString([(0, 0), (1, 1)]),
@@ -136,14 +135,13 @@ def df_mixed_single_and_multi():
         },
         crs="epsg:4326",
     )
-    return df
 
 
 @pytest.fixture
 def df_geom_collection():
     from shapely.geometry import Point, LineString, Polygon, GeometryCollection
 
-    df = geopandas.GeoDataFrame(
+    return geopandas.GeoDataFrame(
         {
             "geometry": [
                 GeometryCollection(
@@ -157,24 +155,23 @@ def df_geom_collection():
         },
         crs="epsg:4326",
     )
-    return df
 
 
 @pytest.fixture
 def df_linear_ring():
     from shapely.geometry import LinearRing
 
-    df = geopandas.GeoDataFrame(
-        {"geometry": [LinearRing(((0, 0), (0, 1), (1, 1), (1, 0)))]}, crs="epsg:4326"
+    return geopandas.GeoDataFrame(
+        {"geometry": [LinearRing(((0, 0), (0, 1), (1, 1), (1, 0)))]},
+        crs="epsg:4326",
     )
-    return df
 
 
 @pytest.fixture
 def df_3D_geoms():
     from shapely.geometry import Point, LineString, Polygon
 
-    df = geopandas.GeoDataFrame(
+    return geopandas.GeoDataFrame(
         {
             "geometry": [
                 LineString([(0, 0, 0), (1, 1, 1)]),
@@ -184,7 +181,6 @@ def df_3D_geoms():
         },
         crs="epsg:4326",
     )
-    return df
 
 
 class TestIO:
@@ -325,8 +321,8 @@ class TestIO:
         con = connection_postgis
         create_postgis(con, df_nybb)
 
-        sql = "SELECT * FROM nybb;"
         with pytest.warns(DeprecationWarning):
+            sql = "SELECT * FROM nybb;"
             geopandas.io.sql.read_postgis(sql, con)
 
     def test_write_postgis_default(self, engine_postgis, df_nybb):
@@ -388,9 +384,7 @@ class TestIO:
         try:
             write_postgis(df_nybb, con=engine, name=table, if_exists="fail")
         except ValueError as e:
-            if "already exists" in str(e):
-                pass
-            else:
+            if "already exists" not in str(e):
                 raise e
 
     def test_write_postgis_replace_when_table_exists(self, engine_postgis, df_nybb):

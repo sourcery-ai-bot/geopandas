@@ -42,7 +42,7 @@ def dfs_index(request, dfs):
     if request.param == "int-index":
         df1.index = [1, 2]
         df2.index = [0, 2]
-    if request.param == "string-index":
+    elif request.param == "string-index":
         df1.index = ["row1", "row2"]
     return df1, df2
 

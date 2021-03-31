@@ -300,11 +300,9 @@ def _plot_point_collection(
     _expand_kwargs(kwargs, multiindex)
 
     if "norm" not in kwargs:
-        collection = ax.scatter(x, y, vmin=vmin, vmax=vmax, cmap=cmap, **kwargs)
+        return ax.scatter(x, y, vmin=vmin, vmax=vmax, cmap=cmap, **kwargs)
     else:
-        collection = ax.scatter(x, y, cmap=cmap, **kwargs)
-
-    return collection
+        return ax.scatter(x, y, cmap=cmap, **kwargs)
 
 
 plot_point_collection = deprecated(_plot_point_collection)
@@ -703,12 +701,11 @@ GON (((-122.84000 49.00000, -120.0000...
             raise ValueError(
                 "The dataframe and given column have different number of rows."
             )
-        else:
-            values = column
+        values = column
 
-            # Make sure index of a Series matches index of df
-            if isinstance(values, pd.Series):
-                values = values.reindex(df.index)
+        # Make sure index of a Series matches index of df
+        if isinstance(values, pd.Series):
+            values = values.reindex(df.index)
     else:
         values = df[column]
 
@@ -753,25 +750,25 @@ GON (((-122.84000 49.00000, -120.0000...
         # set categorical to True for creating the legend
         categorical = True
         if legend_kwds is not None and "labels" in legend_kwds:
-            if len(legend_kwds["labels"]) != binning.k:
+            if len(legend_kwds["labels"]) == binning.k:
+                categories = list(legend_kwds.pop("labels"))
+            else:
                 raise ValueError(
                     "Number of labels must match number of bins, "
                     "received {} labels for {} bins".format(
                         len(legend_kwds["labels"]), binning.k
                     )
                 )
-            else:
-                categories = list(legend_kwds.pop("labels"))
         else:
             fmt = "{:.2f}"
             if legend_kwds is not None and "fmt" in legend_kwds:
                 fmt = legend_kwds.pop("fmt")
 
             categories = binning.get_legend_classes(fmt)
-            if legend_kwds is not None:
-                show_interval = legend_kwds.pop("interval", False)
-            else:
+            if legend_kwds is None:
                 show_interval = False
+            else:
+                show_interval = legend_kwds.pop("interval", False)
             if not show_interval:
                 categories = [c[1:-1] for c in categories]
         values = np.array(binning.yb)
@@ -835,9 +832,8 @@ GON (((-122.84000 49.00000, -120.0000...
         )
 
     if missing_kwds is not None and not expl_series[nan_idx].empty:
-        if color:
-            if "color" not in missing_kwds:
-                missing_kwds["color"] = color
+        if color and "color" not in missing_kwds:
+            missing_kwds["color"] = color
 
         merged_kwds = style_kwds.copy()
         merged_kwds.update(missing_kwds)
@@ -860,10 +856,7 @@ GON (((-122.84000 49.00000, -120.0000...
             norm = Normalize(vmin=mn, vmax=mx)
         n_cmap = cm.ScalarMappable(norm=norm, cmap=cmap)
         if categorical:
-            patches = []
-            for value, cat in enumerate(categories):
-                patches.append(
-                    Line2D(
+            patches = [Line2D(
                         [0],
                         [0],
                         linestyle="none",
@@ -872,8 +865,7 @@ GON (((-122.84000 49.00000, -120.0000...
                         markersize=10,
                         markerfacecolor=n_cmap.to_rgba(value),
                         markeredgewidth=0,
-                    )
-                )
+                    ) for value, cat in enumerate(categories)]
             if missing_kwds is not None:
                 if "color" in merged_kwds:
                     merged_kwds["facecolor"] = merged_kwds["color"]
@@ -975,9 +967,10 @@ def _mapclassify_choro(values, scheme, **classification_kwds):
             "The 'mapclassify' >= 2.2.0 package is required to "
             "use the 'scheme' keyword"
         )
-    schemes = {}
-    for classifier in classifiers.CLASSIFIERS:
-        schemes[classifier.lower()] = getattr(classifiers, classifier)
+    schemes = {
+        classifier.lower(): getattr(classifiers, classifier)
+        for classifier in classifiers.CLASSIFIERS
+    }
 
     scheme = scheme.lower()
 

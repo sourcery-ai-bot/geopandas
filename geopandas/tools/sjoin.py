@@ -88,9 +88,7 @@ stria    AUT    416600.0
 
     indices = _geom_predicate_query(left_df, right_df, op)
 
-    joined = _frame_join(indices, left_df, right_df, how, lsuffix, rsuffix)
-
-    return joined
+    return _frame_join(indices, left_df, right_df, how, lsuffix, rsuffix)
 
 
 def _basic_checks(left_df, right_df, how, lsuffix, rsuffix):

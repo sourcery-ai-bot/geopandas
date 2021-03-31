@@ -36,13 +36,13 @@ def dfs(request):
     df1 = GeoDataFrame({"geometry": polys1, "df1": [0, 1, 2]})
     df2 = GeoDataFrame({"geometry": polys2, "df2": [3, 4, 5]})
 
-    if request.param == "string-index":
-        df1.index = ["a", "b", "c"]
-        df2.index = ["d", "e", "f"]
-
     if request.param == "named-index":
         df1.index.name = "df1_ix"
         df2.index.name = "df2_ix"
+
+    elif request.param == "string-index":
+        df1.index = ["a", "b", "c"]
+        df2.index = ["d", "e", "f"]
 
     if request.param == "multi-index":
         i1 = ["a", "b", "c"]

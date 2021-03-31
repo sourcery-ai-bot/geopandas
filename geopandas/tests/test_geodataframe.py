@@ -285,9 +285,7 @@ class TestDataFrame:
         # Set the Series to be Point(i,i) where i is the index
         self.df.index = range(len(self.df) - 1, -1, -1)
 
-        d = {}
-        for i in range(len(self.df)):
-            d[i] = Point(i, i)
+        d = {i: Point(i, i) for i in range(len(self.df))}
         g = GeoSeries(d)
         # At this point, the DataFrame index is [4,3,2,1,0] and the
         # GeoSeries index is [0,1,2,3,4]. Make sure set_geometry aligns

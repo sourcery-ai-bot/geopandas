@@ -122,7 +122,7 @@ class GeoDataFrame(GeoPandasBase, DataFrame):
                     hasattr(self["geometry"].values, "crs")
                     and self["geometry"].values.crs
                     and crs
-                    and not self["geometry"].values.crs == crs
+                    and self["geometry"].values.crs != crs
                 ):
                     warnings.warn(
                         "CRS mismatch between CRS of the passed geometries "
@@ -151,7 +151,7 @@ class GeoDataFrame(GeoPandasBase, DataFrame):
                 hasattr(geometry, "crs")
                 and geometry.crs
                 and crs
-                and not geometry.crs == crs
+                and geometry.crs != crs
             ):
                 warnings.warn(
                     "CRS mismatch between CRS of the passed geometries "
@@ -255,11 +255,7 @@ class GeoDataFrame(GeoPandasBase, DataFrame):
         GeoDataFrame.rename_geometry : rename an active geometry column
         """
         # Most of the code here is taken from DataFrame.set_index()
-        if inplace:
-            frame = self
-        else:
-            frame = self.copy()
-
+        frame = self if inplace else self.copy()
         to_remove = None
         geo_column_name = self._geometry_column_name
         if isinstance(col, (Series, list, np.ndarray, GeometryArray)):
@@ -340,13 +336,12 @@ class GeoDataFrame(GeoPandasBase, DataFrame):
         geometry_col = self.geometry.name
         if col in self.columns:
             raise ValueError(f"Column named {col} already exists")
-        else:
-            if not inplace:
-                return self.rename(columns={geometry_col: col}).set_geometry(
-                    col, inplace
-                )
-            self.rename(columns={geometry_col: col}, inplace=inplace)
-            self.set_geometry(col, inplace=inplace)
+        if not inplace:
+            return self.rename(columns={geometry_col: col}).set_geometry(
+                col, inplace
+            )
+        self.rename(columns={geometry_col: col}, inplace=inplace)
+        self.set_geometry(col, inplace=inplace)
 
     @property
     def crs(self):
@@ -419,9 +414,8 @@ class GeoDataFrame(GeoPandasBase, DataFrame):
         # at GeoDataFrame level with '_crs' (and not 'crs'), so without propagating
         # to the GeoSeries/GeometryArray
         try:
-            if self.crs is not None:
-                if self.geometry.values.crs is None:
-                    self.crs = self.crs
+            if self.crs is not None and self.geometry.values.crs is None:
+                self.crs = self.crs
         except Exception:
             pass
 
@@ -656,7 +650,7 @@ class GeoDataFrame(GeoPandasBase, DataFrame):
         geopandas.read_postgis : read PostGIS database to GeoDataFrame
         """
 
-        df = geopandas.io.sql._read_postgis(
+        return geopandas.io.sql._read_postgis(
             sql,
             con,
             geom_col=geom_col,
@@ -667,8 +661,6 @@ class GeoDataFrame(GeoPandasBase, DataFrame):
             params=params,
             chunksize=chunksize,
         )
-
-        return df
 
     def to_json(self, na="null", show_bbox=False, drop_id=False, **kwargs):
         """
@@ -828,11 +820,7 @@ box': (2.0, 1.0, 2.0, 1.0)}], 'bbox': (1.0, 1.0, 2.0, 2.0)}
                 else:
                     properties_items = {k: v for k, v in zip(properties_cols, row)}
 
-                if drop_id:
-                    feature = {}
-                else:
-                    feature = {"id": str(ids[i])}
-
+                feature = {} if drop_id else {"id": str(ids[i])}
                 feature["type"] = "Feature"
                 feature["properties"] = properties_items
                 feature["geometry"] = mapping(geom) if geom else None
@@ -845,11 +833,7 @@ box': (2.0, 1.0, 2.0, 1.0)}], 'bbox': (1.0, 1.0, 2.0, 2.0)}
         else:
             for fid, geom in zip(ids, geometries):
 
-                if drop_id:
-                    feature = {}
-                else:
-                    feature = {"id": str(fid)}
-
+                feature = {} if drop_id else {"id": str(fid)}
                 feature["type"] = "Feature"
                 feature["properties"] = {}
                 feature["geometry"] = mapping(geom) if geom else None
@@ -1155,10 +1139,7 @@ box': (2.0, 1.0, 2.0, 1.0)}], 'bbox': (1.0, 1.0, 2.0, 2.0)}
         GeoDataFrame.to_crs : re-project to another CRS
 
         """
-        if not inplace:
-            df = self.copy()
-        else:
-            df = self
+        df = self.copy() if not inplace else self
         df.geometry = df.geometry.set_crs(
             crs=crs, epsg=epsg, allow_override=allow_override, inplace=True
         )
@@ -1240,10 +1221,7 @@ box': (2.0, 1.0, 2.0, 1.0)}], 'bbox': (1.0, 1.0, 2.0, 2.0)}
         --------
         GeoDataFrame.set_crs : assign CRS without re-projection
         """
-        if inplace:
-            df = self
-        else:
-            df = self.copy()
+        df = self if inplace else self.copy()
         geom = df.geometry.to_crs(crs=crs, epsg=epsg)
         df.geometry = geom
         df.crs = geom.crs
@@ -1303,7 +1281,7 @@ box': (2.0, 1.0, 2.0, 1.0)}], 'bbox': (1.0, 1.0, 2.0, 2.0)}
         elif isinstance(result, DataFrame) and geo_col in result:
             result.__class__ = GeoDataFrame
             result._geometry_column_name = geo_col
-        elif isinstance(result, DataFrame) and geo_col not in result:
+        elif isinstance(result, DataFrame):
             result.__class__ = DataFrame
         return result
 
@@ -1348,12 +1326,13 @@ box': (2.0, 1.0, 2.0, 1.0)}], 'bbox': (1.0, 1.0, 2.0, 2.0)}
         """
         result = DataFrame.merge(self, *args, **kwargs)
         geo_col = self._geometry_column_name
-        if isinstance(result, DataFrame) and geo_col in result:
-            result.__class__ = GeoDataFrame
-            result.crs = self.crs
-            result._geometry_column_name = geo_col
-        elif isinstance(result, DataFrame) and geo_col not in result:
-            result.__class__ = DataFrame
+        if isinstance(result, DataFrame):
+            if geo_col in result:
+                result.__class__ = GeoDataFrame
+                result.crs = self.crs
+                result._geometry_column_name = geo_col
+            else:
+                result.__class__ = DataFrame
         return result
 
     @inherit_doc(pd.DataFrame)
@@ -1362,12 +1341,15 @@ box': (2.0, 1.0, 2.0, 1.0)}], 'bbox': (1.0, 1.0, 2.0, 2.0)}
             func, axis=axis, raw=raw, result_type=result_type, args=args, **kwargs
         )
         if (
-            isinstance(result, GeoDataFrame)
-            and self._geometry_column_name in result.columns
-            and any(isinstance(t, GeometryDtype) for t in result.dtypes)
+            (
+                isinstance(result, GeoDataFrame)
+                and self._geometry_column_name in result.columns
+                and any(isinstance(t, GeometryDtype) for t in result.dtypes)
+            )
+            and self.crs is not None
+            and result.crs is None
         ):
-            if self.crs is not None and result.crs is None:
-                result.set_crs(self.crs, inplace=True)
+            result.set_crs(self.crs, inplace=True)
         return result
 
     @property
@@ -1494,8 +1476,7 @@ box': (2.0, 1.0, 2.0, 1.0)}], 'bbox': (1.0, 1.0, 2.0, 2.0)}
 
         # Process spatial component
         def merge_geometries(block):
-            merged_geom = block.unary_union
-            return merged_geom
+            return block.unary_union
 
         g = self.groupby(group_keys=False, **groupby_kwargs)[self.geometry.name].agg(
             merge_geometries
@@ -1590,8 +1571,7 @@ box': (2.0, 1.0, 2.0, 1.0)}], 'bbox': (1.0, 1.0, 2.0, 2.0)}
         if "__level_1" in df.columns:
             df = df.rename(columns={"__level_1": "level_1"})
 
-        geo_df = df.set_geometry(self._geometry_column_name)
-        return geo_df
+        return df.set_geometry(self._geometry_column_name)
 
     # overrides the pandas astype method to ensure the correct return type
     def astype(self, dtype, copy=True, errors="raise", **kwargs):

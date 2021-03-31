@@ -65,12 +65,12 @@ def _delegate_property(op, this):
     # type: (str, GeoSeries) -> GeoSeries/Series
     a_this = GeometryArray(this.geometry.values)
     data = getattr(a_this, op)
-    if isinstance(data, GeometryArray):
-        from .geoseries import GeoSeries
-
-        return GeoSeries(data.data, index=this.index, crs=this.crs)
-    else:
+    if not isinstance(data, GeometryArray):
         return Series(data, index=this.index)
+
+    from .geoseries import GeoSeries
+
+    return GeoSeries(data.data, index=this.index, crs=this.crs)
 
 
 def _delegate_geo_method(op, this, *args, **kwargs):

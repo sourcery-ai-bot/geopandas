@@ -28,11 +28,10 @@ def validate_boro_df(df, case_sensitive=False):
     # were properly loaded as MultiPolygons
     assert len(df) == 5
     columns = ("BoroCode", "BoroName", "Shape_Leng", "Shape_Area")
-    if case_sensitive:
-        for col in columns:
+    for col in columns:
+        if case_sensitive:
             assert col in df.columns
-    else:
-        for col in columns:
+        else:
             assert col.lower() in (dfcol.lower() for dfcol in df.columns)
     assert Series(df.geometry.type).dropna().eq("MultiPolygon").all()
 

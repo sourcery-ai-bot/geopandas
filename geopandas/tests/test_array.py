@@ -44,9 +44,11 @@ P = from_shapely(points)
 
 def equal_geometries(result, expected):
     for r, e in zip(result, expected):
-        if r is None or e is None:
-            if not (r is None and e is None):
+        if r is None:
+            if e is not None:
                 return False
+        elif e is None:
+            return False
         elif not r.equals(e):
             return False
     return True
@@ -290,7 +292,7 @@ def test_predicates_vector_scalar(attr, args):
 )
 def test_predicates_vector_vector(attr, args):
     na_value = False
-    empty_value = True if attr == "disjoint" else False
+    empty_value = attr == "disjoint"
 
     A = (
         [shapely.geometry.Polygon(), None]
@@ -546,9 +548,10 @@ def test_binary_distance():
     p = points[0]
     result = T.distance(p)
     expected = [
-        getattr(t, attr)(p) if not (t is None or t.is_empty) else na_value
+        getattr(t, attr)(p) if t is not None and not t.is_empty else na_value
         for t in triangles
     ]
+
     np.testing.assert_allclose(result, expected)
 
     # other is empty

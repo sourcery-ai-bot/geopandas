@@ -49,8 +49,7 @@ def dtype():
 def make_data():
     a = np.empty(100, dtype=object)
     a[:] = [shapely.geometry.Point(i, i) for i in range(100)]
-    ga = from_shapely(a)
-    return ga
+    return from_shapely(a)
 
 
 @pytest.fixture
@@ -467,10 +466,7 @@ class TestMethods(extension_tests.BaseMethodsTests):
     def test_sort_values_missing(self, data_missing_for_sorting, ascending):
         ser = pd.Series(data_missing_for_sorting)
         result = ser.sort_values(ascending=ascending)
-        if ascending:
-            expected = ser.iloc[[2, 0, 1]]
-        else:
-            expected = ser.iloc[[0, 2, 1]]
+        expected = ser.iloc[[2, 0, 1]] if ascending else ser.iloc[[0, 2, 1]]
         self.assert_series_equal(result, expected)
 
     @no_sorting

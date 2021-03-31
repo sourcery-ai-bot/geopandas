@@ -243,11 +243,11 @@ def _get_srid_from_crs(gdf):
     # Use geoalchemy2 default for srid
     # Note: undefined srid in PostGIS is 0
     srid = -1
-    warning_msg = (
-        "Could not parse CRS from the GeoDataFrame. "
-        + "Inserting data without defined CRS.",
-    )
     if gdf.crs is not None:
+        warning_msg = (
+            "Could not parse CRS from the GeoDataFrame. "
+            + "Inserting data without defined CRS.",
+        )
         try:
             srid = gdf.crs.to_epsg(min_confidence=25)
             if srid is None:
@@ -401,11 +401,7 @@ def _write_postgis(
     # Convert geometries to EWKB
     gdf = _convert_to_ewkb(gdf, geom_name, srid)
 
-    if schema is not None:
-        schema_name = schema
-    else:
-        schema_name = "public"
-
+    schema_name = schema if schema is not None else "public"
     if if_exists == "append":
         # Check that the geometry srid matches with the current GeoDataFrame
         with _get_conn(con) as connection:

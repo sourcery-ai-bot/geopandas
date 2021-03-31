@@ -571,20 +571,20 @@ class TestPygeosInterface:
         """
         Tests the `query_bulk` method with invalid input for the `geometry` parameter.
         """
-        test_array = "notanarray"
         with pytest.raises(TypeError):
+            test_array = "notanarray"
             self.df.sindex.query_bulk(test_array)
 
     def test_query_bulk_invalid_predicate(self):
         """Tests the `query_bulk` method with invalid predicates."""
         test_geom_bounds = (-1, -1, -0.5, -0.5)
-        test_predicate = "test"
-
         # pass through GeoSeries to have GeoPandas
         # determine if it should use shapely or pygeos geometry objects
         test_geom = geopandas.GeoSeries([box(*test_geom_bounds)], index=["0"])
 
         with pytest.raises(ValueError):
+            test_predicate = "test"
+
             self.df.sindex.query_bulk(test_geom.geometry, predicate=test_predicate)
 
     @pytest.mark.parametrize(

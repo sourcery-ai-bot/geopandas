@@ -302,12 +302,10 @@ def _to_file(
         df = df.reset_index(drop=False)
     if schema is None:
         schema = infer_schema(df)
-    if crs:
-        crs = pyproj.CRS.from_user_input(crs)
-    else:
-        crs = df.crs
-
-    if driver == "ESRI Shapefile" and any([len(c) > 10 for c in df.columns.tolist()]):
+    crs = pyproj.CRS.from_user_input(crs) if crs else df.crs
+    if driver == "ESRI Shapefile" and any(
+        len(c) > 10 for c in df.columns.tolist()
+    ):
         warnings.warn(
             "Column names longer than 10 characters will be truncated when saved to "
             "ESRI Shapefile.",

@@ -21,8 +21,9 @@ pytestmark = pytest.mark.skip_no_sindex
 def point_gdf():
     """Create a point GeoDataFrame."""
     pts = np.array([[2, 2], [3, 4], [9, 8], [-12, -15]])
-    gdf = GeoDataFrame([Point(xy) for xy in pts], columns=["geometry"], crs="EPSG:4326")
-    return gdf
+    return GeoDataFrame(
+        [Point(xy) for xy in pts], columns=["geometry"], crs="EPSG:4326"
+    )
 
 
 @pytest.fixture
@@ -30,8 +31,9 @@ def pointsoutside_nooverlap_gdf():
     """Create a point GeoDataFrame. Its points are all outside the single
     rectangle, and its bounds are outside the single rectangle's."""
     pts = np.array([[5, 15], [15, 15], [15, 20]])
-    gdf = GeoDataFrame([Point(xy) for xy in pts], columns=["geometry"], crs="EPSG:4326")
-    return gdf
+    return GeoDataFrame(
+        [Point(xy) for xy in pts], columns=["geometry"], crs="EPSG:4326"
+    )
 
 
 @pytest.fixture
@@ -39,8 +41,9 @@ def pointsoutside_overlap_gdf():
     """Create a point GeoDataFrame. Its points are all outside the single
     rectangle, and its bounds are overlapping the single rectangle's."""
     pts = np.array([[5, 15], [15, 15], [15, 5]])
-    gdf = GeoDataFrame([Point(xy) for xy in pts], columns=["geometry"], crs="EPSG:4326")
-    return gdf
+    return GeoDataFrame(
+        [Point(xy) for xy in pts], columns=["geometry"], crs="EPSG:4326"
+    )
 
 
 @pytest.fixture
@@ -77,10 +80,9 @@ def buffered_locations(point_gdf):
 @pytest.fixture
 def donut_geometry(buffered_locations, single_rectangle_gdf):
     """Make a geometry with a hole in the middle (a donut)."""
-    donut = geopandas.overlay(
+    return geopandas.overlay(
         buffered_locations, single_rectangle_gdf, how="symmetric_difference"
     )
-    return donut
 
 
 @pytest.fixture
@@ -88,8 +90,7 @@ def two_line_gdf():
     """Create Line Objects For Testing"""
     linea = LineString([(1, 1), (2, 2), (3, 2), (5, 3)])
     lineb = LineString([(3, 4), (5, 7), (12, 2), (10, 5), (9, 7.5)])
-    gdf = GeoDataFrame([1, 2], geometry=[linea, lineb], crs="EPSG:4326")
-    return gdf
+    return GeoDataFrame([1, 2], geometry=[linea, lineb], crs="EPSG:4326")
 
 
 @pytest.fixture
@@ -134,10 +135,9 @@ def mixed_gdf():
     line = LineString([(1, 1), (2, 2), (3, 2), (5, 3), (12, 1)])
     poly = Polygon([(3, 4), (5, 2), (12, 2), (10, 5), (9, 7.5)])
     ring = LinearRing([(1, 1), (2, 2), (3, 2), (5, 3), (12, 1)])
-    gdf = GeoDataFrame(
+    return GeoDataFrame(
         [1, 2, 3, 4], geometry=[point, poly, line, ring], crs="EPSG:4326"
     )
-    return gdf
 
 
 @pytest.fixture
@@ -146,8 +146,7 @@ def geomcol_gdf():
     point = Point([(2, 3), (11, 4), (7, 2), (8, 9), (1, 13)])
     poly = Polygon([(3, 4), (5, 2), (12, 2), (10, 5), (9, 7.5)])
     coll = GeometryCollection([point, poly])
-    gdf = GeoDataFrame([1], geometry=[coll], crs="EPSG:4326")
-    return gdf
+    return GeoDataFrame([1], geometry=[coll], crs="EPSG:4326")
 
 
 @pytest.fixture
@@ -155,8 +154,7 @@ def sliver_line():
     """Create a line that will create a point when clipped."""
     linea = LineString([(10, 5), (13, 5), (15, 5)])
     lineb = LineString([(1, 1), (2, 2), (3, 2), (5, 3), (12, 1)])
-    gdf = GeoDataFrame([1, 2], geometry=[linea, lineb], crs="EPSG:4326")
-    return gdf
+    return GeoDataFrame([1, 2], geometry=[linea, lineb], crs="EPSG:4326")
 
 
 def test_not_gdf(single_rectangle_gdf):

@@ -543,7 +543,7 @@ def test_preserve_attrs(df):
     assert df.attrs == attrs
 
     # preserve attrs in indexing operations
-    for subset in [df[:2], df[df["value1"] > 2], df[["value2", "geometry"]]]:
+    for _ in [df[:2], df[df["value1"] > 2], df[["value2", "geometry"]]]:
         assert df.attrs == attrs
 
     # preserve attrs in methods
@@ -558,7 +558,7 @@ def test_preserve_flags(df):
     assert df.flags.allows_duplicate_labels is False
 
     # preserve flags in indexing operations
-    for subset in [df[:2], df[df["value1"] > 2], df[["value2", "geometry"]]]:
+    for _ in [df[:2], df[df["value1"] > 2], df[["value2", "geometry"]]]:
         assert df.flags.allows_duplicate_labels is False
 
     # preserve attrs in methods

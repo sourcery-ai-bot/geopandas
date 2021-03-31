@@ -149,8 +149,7 @@ def _query(data, forward, provider, throttle_time, **kwargs):
             results[i] = (None, None)
         time.sleep(throttle_time)
 
-    df = _prepare_geocode_result(results)
-    return df
+    return _prepare_geocode_result(results)
 
 
 def _prepare_geocode_result(results):
@@ -175,15 +174,9 @@ def _prepare_geocode_result(results):
             address, loc = s
 
             # loc is lat, lon and we want lon, lat
-            if loc is None:
-                p = Point()
-            else:
-                p = Point(loc[1], loc[0])
-
+            p = Point() if loc is None else Point(loc[1], loc[0])
         d["geometry"].append(p)
         d["address"].append(address)
         index.append(i)
 
-    df = geopandas.GeoDataFrame(d, index=index, crs="EPSG:4326")
-
-    return df
+    return geopandas.GeoDataFrame(d, index=index, crs="EPSG:4326")

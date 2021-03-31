@@ -22,6 +22,6 @@ except ImportError:
 
 
 def pytest_runtest_setup(item):
-    skip_no_sindex = any(mark for mark in item.iter_markers(name="skip_no_sindex"))
+    skip_no_sindex = any(item.iter_markers(name="skip_no_sindex"))
     if skip_no_sindex and not has_sindex_backend:
         pytest.skip("Skipped because there is no spatial index backend available")

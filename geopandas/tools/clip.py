@@ -129,9 +129,10 @@ def clip(gdf, mask, keep_geom_type=False):
             "(Multi)Polygon, got {}".format(type(mask))
         )
 
-    if isinstance(mask, (GeoDataFrame, GeoSeries)):
-        if not _check_crs(gdf, mask):
-            _crs_mismatch_warn(gdf, mask, stacklevel=3)
+    if isinstance(mask, (GeoDataFrame, GeoSeries)) and not _check_crs(
+        gdf, mask
+    ):
+        _crs_mismatch_warn(gdf, mask, stacklevel=3)
 
     if isinstance(mask, (GeoDataFrame, GeoSeries)):
         box_mask = mask.total_bounds
@@ -159,21 +160,9 @@ def clip(gdf, mask, keep_geom_type=False):
     point_idx = np.asarray((geom_types == "Point") | (geom_types == "MultiPoint"))
     geomcoll_idx = np.asarray((geom_types == "GeometryCollection"))
 
-    if point_idx.any():
-        point_gdf = _clip_points(gdf[point_idx], poly)
-    else:
-        point_gdf = None
-
-    if poly_idx.any():
-        poly_gdf = _clip_line_poly(gdf[poly_idx], poly)
-    else:
-        poly_gdf = None
-
-    if line_idx.any():
-        line_gdf = _clip_line_poly(gdf[line_idx], poly)
-    else:
-        line_gdf = None
-
+    point_gdf = _clip_points(gdf[point_idx], poly) if point_idx.any() else None
+    poly_gdf = _clip_line_poly(gdf[poly_idx], poly) if poly_idx.any() else None
+    line_gdf = _clip_line_poly(gdf[line_idx], poly) if line_idx.any() else None
     if geomcoll_idx.any():
         geomcoll_gdf = _clip_line_poly(gdf[geomcoll_idx], poly)
     else:

@@ -79,12 +79,9 @@ def _check_crs(left, right, allow_none=False):
 
     If allow_none is True, empty CRS is treated as the same.
     """
-    if allow_none:
-        if not left.crs or not right.crs:
-            return True
-    if not left.crs == right.crs:
-        return False
-    return True
+    if allow_none and (not left.crs or not right.crs):
+        return True
+    return left.crs == right.crs
 
 
 def _crs_mismatch_warn(left, right, stacklevel=3):
@@ -293,7 +290,7 @@ class GeometryArray(ExtensionArray):
                 "'data' should be array of geometry objects. Use from_shapely, "
                 "from_wkb, from_wkt functions to construct a GeometryArray."
             )
-        elif not data.ndim == 1:
+        elif data.ndim != 1:
             raise ValueError(
                 "'data' should be a 1-dimensional array of geometry objects."
             )
@@ -879,27 +876,24 @@ class GeometryArray(ExtensionArray):
         """Return the x location of point geometries in a GeoSeries"""
         if (self.geom_type[~self.isna()] == "Point").all():
             return vectorized.get_x(self.data)
-        else:
-            message = "x attribute access only provided for Point geometries"
-            raise ValueError(message)
+        message = "x attribute access only provided for Point geometries"
+        raise ValueError(message)
 
     @property
     def y(self):
         """Return the y location of point geometries in a GeoSeries"""
         if (self.geom_type[~self.isna()] == "Point").all():
             return vectorized.get_y(self.data)
-        else:
-            message = "y attribute access only provided for Point geometries"
-            raise ValueError(message)
+        message = "y attribute access only provided for Point geometries"
+        raise ValueError(message)
 
     @property
     def z(self):
         """Return the z location of point geometries in a GeoSeries"""
         if (self.geom_type[~self.isna()] == "Point").all():
             return vectorized.get_z(self.data)
-        else:
-            message = "z attribute access only provided for Point geometries"
-            raise ValueError(message)
+        message = "z attribute access only provided for Point geometries"
+        raise ValueError(message)
 
     @property
     def bounds(self):
@@ -1219,30 +1213,30 @@ class GeometryArray(ExtensionArray):
             when ``boxed=False`` and :func:`str` is used when
             ``boxed=True``.
         """
-        if boxed:
-            import geopandas
+        if not boxed:
+            return repr
+        import geopandas
 
-            precision = geopandas.options.display_precision
-            if precision is None:
-                # dummy heuristic based on 10 first geometries that should
-                # work in most cases
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", category=RuntimeWarning)
-                    xmin, ymin, xmax, ymax = self[~self.isna()][:10].total_bounds
-                if (
-                    (-180 <= xmin <= 180)
-                    and (-180 <= xmax <= 180)
-                    and (-90 <= ymin <= 90)
-                    and (-90 <= ymax <= 90)
-                ):
-                    # geographic coordinates
-                    precision = 5
-                else:
-                    # typically projected coordinates
-                    # (in case of unit meter: mm precision)
-                    precision = 3
-            return lambda geom: shapely.wkt.dumps(geom, rounding_precision=precision)
-        return repr
+        precision = geopandas.options.display_precision
+        if precision is None:
+            # dummy heuristic based on 10 first geometries that should
+            # work in most cases
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                xmin, ymin, xmax, ymax = self[~self.isna()][:10].total_bounds
+            if (
+                (-180 <= xmin <= 180)
+                and (-180 <= xmax <= 180)
+                and (-90 <= ymin <= 90)
+                and (-90 <= ymax <= 90)
+            ):
+                # geographic coordinates
+                precision = 5
+            else:
+                # typically projected coordinates
+                # (in case of unit meter: mm precision)
+                precision = 3
+        return lambda geom: shapely.wkt.dumps(geom, rounding_precision=precision)
 
     @classmethod
     def _concat_same_type(cls, to_concat):
@@ -1263,7 +1257,7 @@ class GeometryArray(ExtensionArray):
     def _reduce(self, name, skipna=True, **kwargs):
         # including the base class version here (that raises by default)
         # because this was not yet defined in pandas 0.23
-        if name == "any" or name == "all":
+        if name in ["any", "all"]:
             # TODO(pygeos)
             return getattr(to_shapely(self), name)()
         raise TypeError(
@@ -1287,10 +1281,9 @@ class GeometryArray(ExtensionArray):
             if not _is_scalar_geometry(param) and (
                 isinstance(param, ExtensionArray) or pd.api.types.is_list_like(param)
             ):
-                ovalues = param
+                return param
             else:  # Assume its an object
-                ovalues = [param] * len(self)
-            return ovalues
+                return [param] * len(self)
 
         if isinstance(other, (pd.Series, pd.Index, pd.DataFrame)):
             # rely on pandas to unbox and dispatch to us
